@@ -22,17 +22,52 @@ app.get("/check-git-tree", async (req, res) => {
       },
     })
 
-    const tree = data.tree.filter((item) => item.path.startsWith(path))
+    const tree = data.tree.filter((item) =>
+      item.path.startsWith(path.replace(/^\//, ""))
+    )
 
-    // Generate a text representation of the tree
+    // Generate a text representation of the tree with download URLs
     let treeText = ""
     tree.forEach((item) => {
       const itemType = item.type === "tree" ? "DIR" : "FILE"
-      treeText += `${itemType}: ${item.path}\n`
+      const fileUrl =
+        itemType === "FILE"
+          ? `https://api.github.com/repos/${owner}/${repo}/contents/${item.path}?ref=${ref}`
+          : ""
+      treeText += `${itemType}: ${item.path} ${fileUrl}\n`
     })
 
     res.setHeader("Content-Type", "text/plain")
     res.send(treeText)
+  } catch (error) {
+    res.status(500).json({ error: error.message })
+  }
+})
+
+app.get("/get-file-content", async (req, res) => {
+  const { owner, repo, path, ref = "main" } = req.query
+
+  if (!owner || !repo || !path) {
+    return res
+      .status(400)
+      .json({ error: "Missing owner, repo, or path query parameter" })
+  }
+
+  try {
+    const apiUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${path.replace(
+      /^\//,
+      ""
+    )}?ref=${ref}`
+    const { data } = await axios.get(apiUrl, {
+      headers: {
+        Accept: "application/vnd.github.v3.raw",
+        // Include your GitHub token for higher rate limits if needed
+        // 'Authorization': `token YOUR_GITHUB_TOKEN`
+      },
+    })
+
+    res.setHeader("Content-Type", "text/plain")
+    res.send(data)
   } catch (error) {
     res.status(500).json({ error: error.message })
   }
