@@ -4,16 +4,23 @@ const app = express()
 const port = process.env.PORT || 3000
 
 app.get("/check-git-tree", async (req, res) => {
-  const { repo, path, ref = "main" } = req.query
-  if (!repo || !path) {
+  const { owner, repo, path, ref = "main" } = req.query
+
+  if (!owner || !repo || !path) {
     return res
       .status(400)
-      .json({ error: "Missing repo or path query parameter" })
+      .json({ error: "Missing owner, repo, or path query parameter" })
   }
 
   try {
-    const apiUrl = `https://api.github.com/repos/${repo}/git/trees/${ref}?recursive=1`
-    const { data } = await axios.get(apiUrl)
+    const apiUrl = `https://api.github.com/repos/${owner}/${repo}/git/trees/${ref}?recursive=1`
+    const { data } = await axios.get(apiUrl, {
+      headers: {
+        Accept: "application/vnd.github.v3+json",
+        // Include your GitHub token for higher rate limits if needed
+        // 'Authorization': `token YOUR_GITHUB_TOKEN`
+      },
+    })
 
     const tree = data.tree.filter((item) => item.path.startsWith(path))
 
