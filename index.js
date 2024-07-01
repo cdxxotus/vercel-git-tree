@@ -26,19 +26,19 @@ app.get("/check-git-tree", async (req, res) => {
       item.path.startsWith(path.replace(/^\//, ""))
     )
 
-    // Generate a text representation of the tree with download URLs
-    let treeText = ""
+    // Generate a markdown table representation of the tree with download URLs
+    let treeTable = "| Path | Filename | Content URL |\n"
+    treeTable += "|------|----------|-------------|\n"
     tree.forEach((item) => {
-      const itemType = item.type === "tree" ? "DIR" : "FILE"
-      const fileUrl =
-        itemType === "FILE"
-          ? `get instructions at https://gpt-1o.darkeccho.com/get-file-content?owner=${owner}&repo=${repo}&path=${item.path}&ref=${ref}`
-          : ""
-      treeText += `${itemType}: ${item.path} ${fileUrl}\n`
+      if (item.type === "blob") {
+        const fileUrl = `https://gpt-1o.darkeccho.com/get-file-content?owner=${owner}&repo=${repo}&path=${item.path}&ref=${ref}`
+        const filename = item.path.split("/").pop()
+        treeTable += `| ${item.path} | ${filename} | [Link](${fileUrl}) |\n`
+      }
     })
 
     res.setHeader("Content-Type", "text/plain")
-    res.send(treeText)
+    res.send(treeTable)
   } catch (error) {
     res.status(500).json({ error: error.message })
   }
