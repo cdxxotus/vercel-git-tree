@@ -4,12 +4,12 @@ const app = express()
 const port = process.env.PORT || 3000
 
 app.get("/check-git-tree", async (req, res) => {
-  const { owner, repo, path, ref = "main" } = req.query
+  const { owner, repo, path = "", ref = "main" } = req.query
 
-  if (!owner || !repo || !path) {
+  if (!owner || !repo) {
     return res
       .status(400)
-      .json({ error: "Missing owner, repo, or path query parameter" })
+      .json({ error: "Missing owner or repo query parameter" })
   }
 
   try {
@@ -26,19 +26,21 @@ app.get("/check-git-tree", async (req, res) => {
       item.path.startsWith(path.replace(/^\//, ""))
     )
 
-    // Generate a markdown table representation of the tree with download URLs
-    let treeTable = "| Path | Filename | Content URL |\n"
-    treeTable += "|------|----------|-------------|\n"
+    // Generate a simple HTML representation of the tree with links
+    let treeHtml = `<html><body><h1>Git Tree for ${owner}/${repo}</h1><ul>`
     tree.forEach((item) => {
-      if (item.type === "blob") {
-        const fileUrl = `https://gpt-1o.darkeccho.com/get-file-content?owner=${owner}&repo=${repo}&path=${item.path}&ref=${ref}`
+      if (item.type === "tree") {
+        treeHtml += `<li><a href="/check-git-tree?owner=${owner}&repo=${repo}&path=${item.path}&ref=${ref}">${item.path}/</a></li>`
+      } else if (item.type === "blob") {
+        const fileUrl = `/get-file-content?owner=${owner}&repo=${repo}&path=${item.path}&ref=${ref}`
         const filename = item.path.split("/").pop()
-        treeTable += `| ${item.path} | ${filename} | [Link](${fileUrl}) |\n`
+        treeHtml += `<li><a href="${fileUrl}">${filename}</a></li>`
       }
     })
+    treeHtml += `</ul></body></html>`
 
-    res.setHeader("Content-Type", "text/plain")
-    res.send(treeTable)
+    res.setHeader("Content-Type", "text/html")
+    res.send(treeHtml)
   } catch (error) {
     res.status(500).json({ error: error.message })
   }
