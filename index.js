@@ -24,7 +24,15 @@ app.get("/check-git-tree", async (req, res) => {
 
     const tree = data.tree.filter((item) => item.path.startsWith(path))
 
-    res.json({ tree })
+    // Generate a text representation of the tree
+    let treeText = ""
+    tree.forEach((item) => {
+      const itemType = item.type === "tree" ? "DIR" : "FILE"
+      treeText += `${itemType}: ${item.path}\n`
+    })
+
+    res.setHeader("Content-Type", "text/plain")
+    res.send(treeText)
   } catch (error) {
     res.status(500).json({ error: error.message })
   }
