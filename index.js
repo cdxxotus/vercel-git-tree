@@ -68,8 +68,21 @@ app.get("/get-file-content", async (req, res) => {
       },
     })
 
-    res.setHeader("Content-Type", "text/plain")
-    res.send(data)
+    const fileContent = `
+      <html>
+      <body>
+        <h1>Content of ${path}</h1>
+        <pre>${data}</pre>
+        <a href="/check-git-tree?owner=${owner}&repo=${repo}&path=${path.substring(
+      0,
+      path.lastIndexOf("/")
+    )}&ref=${ref}">Back</a>
+      </body>
+      </html>
+    `
+
+    res.setHeader("Content-Type", "text/html")
+    res.send(fileContent)
   } catch (error) {
     res.status(500).json({ error: error.message })
   }
